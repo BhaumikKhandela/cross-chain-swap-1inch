@@ -30,6 +30,20 @@ interface IEscrowFactory {
         uint256 chainId;
     }
 
+    /**
+     * @notice Complement of the immutables for non-EVM swap.
+     * @dev The maker and token are the hash of the maker and token addresses.
+     * @dev The amount is the amount of the swap.
+     * @dev The safety deposit is the safety deposit of the swap.
+     * @dev The chainId is the chainId of the swap.
+     */
+    struct NonEVMSwapImmutablesComplement {
+        bytes32 maker;
+        uint256 amount;
+        bytes32 token;
+        uint256 safetyDeposit;
+        uint256 chainId;
+    }
     error InsufficientEscrowBalance();
     error InvalidCreationTime();
     error InvalidPartialFill();
@@ -48,6 +62,13 @@ interface IEscrowFactory {
      * @param taker The address of the taker.
      */
     event DstEscrowCreated(address escrow, bytes32 hashlock, Address taker);
+
+    /**
+     * @notice Emitted on Non-EVM swap EscrowSrc deployment to recreate EscrowSrc and EscrowDst immutables off-chain.
+     * @param srcImmutables The immutables of the escrow contract that are used in deployment on the source chain.
+     * @param dstImmutablesComplement Additional immutables related to the escrow contract on the destination chain.
+     */
+    event NonEVMSwapSrcEscrowCreated(IBaseEscrow.Immutables srcImmutables, NonEVMSwapImmutablesComplement dstImmutablesComplement);
 
     /* solhint-disable func-name-mixedcase */
     /// @notice Returns the address of implementation on the source chain.

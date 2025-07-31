@@ -98,6 +98,18 @@ abstract contract BaseEscrowFactory is IEscrowFactory, ResolverValidationExtensi
             timelocks: extraDataArgs.timelocks.setDeployedAt(block.timestamp)
         });
 
+        if (MakerTraits.unwrap(order.makerTraits) & _NON_EVM_SWAP_FLAG != 0) {
+            NonEVMSwapImmutablesComplement memory immutablesComplement = NonEVMSwapImmutablesComplement({
+                maker: extraDataArgs.nonEVMMetaData.dstEscrowAddress,
+                amount: takingAmount,
+                token: extraDataArgs.nonEVMMetaData.dstToken,
+                safetyDeposit: extraDataArgs.deposits & type(uint128).max,
+                chainId: extraDataArgs.dstChainId
+
+            });
+            emit NonEVMSwapSrcEscrowCreated(immutables, immutablesComplement);
+        } else {
+
         DstImmutablesComplement memory immutablesComplement = DstImmutablesComplement({
             maker: order.receiver.get() == address(0) ? order.maker : order.receiver,
             amount: takingAmount,
@@ -107,7 +119,8 @@ abstract contract BaseEscrowFactory is IEscrowFactory, ResolverValidationExtensi
         });
 
         emit SrcEscrowCreated(immutables, immutablesComplement);
-
+    }
+    
         bytes32 salt = immutables.hashMem();
         address escrow = _deployEscrow(salt, 0, ESCROW_SRC_IMPLEMENTATION);
         if (escrow.balance < immutables.safetyDeposit || IERC20(order.makerAsset.get()).safeBalanceOf(escrow) < makingAmount) {
